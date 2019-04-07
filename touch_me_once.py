@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-import os, sys
+import os
+import sys
 
 """
     一笔画完小游戏脚本
@@ -8,6 +9,7 @@ import os, sys
 
 
 road = []
+
 
 def createMap(x_length, y_length, roadblock):
     road_map = []
@@ -25,6 +27,7 @@ def createMap(x_length, y_length, roadblock):
         road_map.remove(block_position)
     return road_map
 
+
 def init(coordinate, roadblock, start_block_num):
     start_block_num = int(start_block_num)
     x = int(coordinate[0])
@@ -36,10 +39,11 @@ def init(coordinate, roadblock, start_block_num):
         div = div - 1
     start_position = (mod - 1, y - div - 1)
 
-    return all_position, start_position
+    return x, y, all_position, start_position
 
-def step(now_pool, position):
-    position_pool = [i for i in now_pool]
+
+def step(current_pool, position):
+    position_pool = [i for i in current_pool]
 
     if position in position_pool:
         if len(position_pool) == 1 and position[0] == position_pool[0][0] and position[1] == position_pool[0][1]:
@@ -72,8 +76,47 @@ def step(now_pool, position):
             road.append(next_position)
             return True
 
-def draw(road):
-    pass
+
+def draw(x, y, position_pool, road):
+    arrow = {
+        'origin': 'O',
+        'left_arrow': '\u2190',
+        'up_arrow': '\u2191',
+        'right_arrow': '\u2192',
+        'down_arrow': '\u2193',
+        'destination': 'X'
+    }
+    length = len(road)
+    road_map = [road[length - i - 1] for i in range(0, length)]
+    direction = {}
+    pre = road_map[0]
+    pool = [(i[0]*2, i[1]*2) for i in position_pool]
+    for i in range(0, length):
+        if pre[0] != road_map[i][0]:
+            if pre[0] > road_map[i][0]:
+                direction[(road_map[i][0]*2+1, road_map[i][1]*2)] = arrow['left_arrow']
+            else:
+                direction[(road_map[i][0]*2-1, road_map[i][1]*2)] = arrow['right_arrow']
+        elif pre[1] > road_map[i][1]:
+            direction[(road_map[i][0]*2, road_map[i][1]*2+1)] = arrow['down_arrow']
+        elif pre[1] < road_map[i][1]:
+            direction[(road_map[i][0]*2, road_map[i][1]*2-1)] = arrow['up_arrow']
+        else:
+            direction[(road_map[i][0]*2, road_map[i][1]*2)] = arrow['origin']
+        if i == length - 1:
+            direction[(road_map[i][0]*2, road_map[i][1]*2)] = arrow['destination']
+        pre = road_map[i]
+
+    for i in range(0, 2*y):
+        for j in range(0, 2*x):
+            if (j, 2*y-i-1) in direction:
+                print(direction[(j, 2*y-i-1)].encode('utf-8').decode('utf-8'), end=' ')
+            elif (j, 2*y-i-1) in pool:
+                print('*'.encode('utf-8').decode('utf-8'), end=' ')
+            else:
+                print(' ', end=' ')
+        print()
+
 
 if __name__ == "__main__":
     if len(sys.argv) < 4:
@@ -85,9 +128,7 @@ if __name__ == "__main__":
     else:
         roadblock = []
     start_block_num = int(sys.argv[-1])
-    all_position, start_position = init(coordinate, roadblock, start_block_num)
+    x, y, all_position, start_position = init(coordinate, roadblock, start_block_num)
     step(all_position, start_position)
-    # draw(road)
-    length = len(road)
-    for i in range(0, length):
-        print(road[length - i - 1])
+    road.append(start_position)
+    draw(x, y, all_position, road)
