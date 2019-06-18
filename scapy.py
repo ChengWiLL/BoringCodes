@@ -10,7 +10,8 @@ scheme = {
     'gif': 'data:image/gif;base64,',
     'jpeg': 'data:image/jpeg;base64,',
     'icon': 'data:image/x-icon;base64,',
-    'svg': 'data:image/svg;base64'
+    'svg': 'data:image/svg;base64',
+    'jpg': 'data:image/jpg;base64'
 }
 
 def get_img_content(a_src):
@@ -18,14 +19,18 @@ def get_img_content(a_src):
     base64_img_content = base64.b64encode(img_content)
     return base64_img_content.decode('utf-8')
 
-def convert_to_base64(content_without_script, img_src_list, img_datasrc_list):
+def convert_to_base64(content_without_script, img_src_list, img_datasrc_list, host):
     for src in img_src_list:
         if src == '':
             continue
         elif src.startswith('//'):
             a_src = 'http:' + src
-        else:
+        elif src.startswith(host):
+            a_src = 'http://' + src
+        elif src.startswith("http"):
             a_src = src
+        else:
+            a_src = 'http://' + host + src
         suffix = a_src.rsplit('.', 1)[1]
         if suffix in scheme.keys():
             a_scheme = scheme[suffix]
@@ -37,10 +42,13 @@ def convert_to_base64(content_without_script, img_src_list, img_datasrc_list):
             except:
                 query = ''
             if '.' in parse.path:
+                print(src,end='\n')
                 img_type = parse.path.rsplit('.',1)[1]
+#if img_type not in scheme:
+#                   img_type = 'png'
             else:
                 img_type = 'png'
-            suffix = img_type if query == '' else query
+            suffix = img_type if query not in scheme else query
             a_scheme = scheme[suffix]
         base64_content = get_img_content(a_src)
         new_src = "{scheme}{base64}".format(scheme=a_scheme, base64=base64_content)
@@ -82,7 +90,7 @@ def main(url):
     img_src_list = root.xpath('.//img/@src')
     img_datasrc_list = root.xpath('.//img/@data-src')
 
-    content_with_base64 = convert_to_base64(content_without_script, img_src_list, img_datasrc_list)
+    content_with_base64 = convert_to_base64(content_without_script, img_src_list, img_datasrc_list, title)
     
     with open("{title}.html".format(title=title), "w") as f:
         print("Outputing...{title}".format(title=title))
